@@ -201,13 +201,16 @@ namespace BodyLoader
         }
         private IEnumerator<YieldInstruction> PatchScaledSpace(CelestialBody body, ConfigNode node, double origRadius)
         {
-            while (ScaledSpace.Instance == null || ScaledSpace.Instance.scaledSpaceTransforms == null)
+            while (ScaledSpace.Instance == null || FlightGlobals.Bodies == null || FlightGlobals.Bodies.Count < 1 || FlightGlobals.Bodies.FindAll(c => c.scaledBody != null).Count < 1)
                 yield return new WaitForSeconds(1f);
 
-            foreach (Transform t in ScaledSpace.Instance.scaledSpaceTransforms)
+            foreach (CelestialBody b in FlightGlobals.Bodies)
             {
-                if (t.name.Equals(body.bodyName))
+                if (b.scaledBody == null)
+                    continue;
+                if (b.name.Equals(body.bodyName))
                 {
+                    Transform t = b.scaledBody.transform;
                     float origLocalScale = t.localScale.x; // assume uniform scale
                     float scaleFactor = (float)((double)origLocalScale * body.Radius / origRadius);
                     t.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
@@ -300,9 +303,17 @@ namespace BodyLoader
                 {
                     body.atmosphereTemperatureSunMultCurve.Load(node.GetNode("atmosphereTemperatureSunMultCurve"));
                 }
-                if (node.HasNode("eccentricityTemperatureSunMultCurve"))
+                if (node.HasNode("axialTemperatureSunBiasCurve"))
                 {
-                    body.eccentricityTemperatureSunMultCurve.Load(node.GetNode("eccentricityTemperatureSunMultCurve"));
+                    body.axialTemperatureSunBiasCurve.Load(node.GetNode("axialTemperatureSunBiasCurve"));
+                }
+                if (node.HasNode("axialTemperatureSunMultCurve"))
+                {
+                    body.axialTemperatureSunMultCurve.Load(node.GetNode("axialTemperatureSunMultCurve"));
+                }
+                if (node.HasNode("eccentricityTemperatureBiasCurve"))
+                {
+                    body.eccentricityTemperatureBiasCurve.Load(node.GetNode("eccentricityTemperatureBiasCurve"));
                 }
 
                 if (node.HasValue("Radius"))
